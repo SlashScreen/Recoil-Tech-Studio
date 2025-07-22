@@ -1,0 +1,2 @@
+--- @class RTSScript
+--- @field name string

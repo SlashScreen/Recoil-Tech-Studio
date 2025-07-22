@@ -1,0 +1,483 @@
+--- @meta
+
+-- Dumb hack to prevent this script from being executed as a gadget.
+-- This is needed because the gadget handler will try to load this file as a gadget and possibly screw up the tables.
+if true then
+	return false
+end
+
+-- The environment for gadgets.
+-- Also includes system.lua.
+
+--- @alias UnitID integer
+--- @alias UnitDefID integer
+--- @alias FeatureID integer
+--- @alias FeatureDefID integer
+--- @alias TeamID integer
+
+handler = handler or {} --- @type GadgetHandlerProxy
+raw_handler = raw_handler or {} --- @type GadgetHandler?
+include = VFS.Include
+SG = SG or {} --- @type table
+UnitDefs = UnitDefs or {} --- @type table<UnitDefID, UnitDef>
+UnitDefNames = UnitDefNames or {} --- @type table<string, UnitDefID>
+FeatureDefs = FeatureDefs or {} --- @type table<FeatureDefID, table>
+
+unitShare = unitShare or false --- @type boolean
+resShare = resShare or false --- @type boolean
+unitShareEnemy = unitShareEnemy or false --- @type boolean
+resShareEnemy = resShareEnemy or false --- @type boolean
+
+---
+-- UnitDef EmmyLua (LuaCATS) definition for SpringRTS
+-- Generated from https://springrts.com/wiki/Gamedev:UnitDefs#Details
+-- This class covers the main fields and subtables as described on the wiki.
+-- For full details, see the official documentation.
+--- @class UnitDef
+--- @field name string # The name of the unit as it appears to the player.
+--- @field description string # Tooltip description of the unit seen by the player.
+--- @field buildPic string # Filename of the build picture (Unitpics/ directory).
+--- @field objectName string # Filename of the 3D model (Objects3D/ directory).
+--- @field script string # Filename of the animation script (Scripts/ directory).
+--- @field maxDamage number # Base 'hitpoints' the unit will have.
+--- @field autoHeal number # Health regained per second.
+--- @field idleAutoHeal number # Health regained per second while idle.
+--- @field idleTime integer # Time in frames until a unit is considered idle.
+--- @field buildCostMetal number # Metal cost to build.
+--- @field buildCostEnergy number # Energy cost to build.
+--- @field buildTime number # Time to build (resource frames).
+--- @field mass number # Mass of the unit, used in impulse calculations.
+--- @field reclaimable boolean # Can the unit be reclaimed by a builder?
+--- @field capturable boolean # Can the unit be captured by a builder?
+--- @field repairable boolean # Can the unit be repaired by a builder?
+--- @field maxRepairSpeed number # Maximum cumulative repair speed.
+--- @field iconType string # Name of the radar icon type.
+--- @field corpse string # Name of the feature left as a wreck.
+--- @field explodeAs string # Weapon name for explosion on death.
+--- @field selfDestructAs string # Weapon name for self-destruct.
+--- @field harvestStorage number # Metal storage for harvester units.
+--- @field metalStorage number # Metal storage provided.
+--- @field energyStorage number # Energy storage provided.
+--- @field extractsMetal number # Metal extraction rate.
+--- @field windGenerator number # Max energy generated from wind.
+--- @field tidalGenerator number # Energy generated from tidal power.
+--- @field metalUse number # Metal consumed per tick when active.
+--- @field energyUse number # Energy consumed per tick when active.
+--- @field metalMake number # Metal generated per tick.
+--- @field energyMake number # Energy generated per tick.
+--- @field makesMetal number # Energy converted to metal per tick.
+--- @field canCloak boolean # Can the unit cloak?
+--- @field cloakCost number # Energy cost per tick to cloak while stationary.
+--- @field cloakCostMoving number # Energy cost per tick to cloak while moving.
+--- @field initCloaked boolean # Is the unit cloaked when created?
+--- @field minCloakDistance number # Minimum distance from enemies to remain cloaked.
+--- @field decloakSpherical boolean # Does minCloakDistance apply in 3D?
+--- @field decloakOnFire boolean # Does the unit decloak when firing?
+--- @field cloakTimeout integer # Minimum time between decloak and re-cloak.
+--- @field onOffable boolean # Does the unit have an on/off button?
+--- @field activateWhenBuilt boolean # Is the unit activated when built?
+--- @field sightDistance number # LOS radius.
+--- @field airSightDistance number # Air LOS radius.
+--- @field losEmitHeight number # Height for LOS calculations.
+--- @field radarEmitHeight number # Height for radar calculations.
+--- @field radarDistance integer # Radar radius.
+--- @field sonarDistance integer # Sonar radius.
+--- @field radarDistanceJam integer # Radar jamming radius.
+--- @field sonarDistanceJam integer # Sonar jamming radius.
+--- @field stealth boolean # Is the unit undetectable by radar?
+--- @field sonarStealth boolean # Is the unit undetectable by sonar?
+--- @field seismicDistance integer # Seismic sensor radius.
+--- @field seismicSignature number # Seismic ring expansion speed.
+--- @field canMove boolean # Can the unit move?
+--- @field canAttack boolean # Can the unit attack?
+--- @field canFight boolean # Can the unit fight?
+--- @field canPatrol boolean # Can the unit patrol?
+--- @field canGuard boolean # Can the unit guard?
+--- @field canRepeat boolean # Can the unit repeat orders?
+--- @field canSelfDestruct boolean # Can the unit self-destruct?
+--- @field moveState integer # Initial movement state.
+--- @field fireState integer # Initial fire state.
+--- @field noAutoFire boolean # Has a fire state button?
+--- @field canManualFire boolean # Can the unit use manual fire?
+--- @field builder boolean # Is the unit a builder?
+--- @field buildDistance number # Build distance for builders.
+--- @field buildRange3D boolean # Is build distance 3D?
+--- @field workerTime number # Build speed for builders.
+--- @field repairSpeed number # Repair speed for builders.
+--- @field reclaimSpeed number # Reclaim speed for builders.
+--- @field resurrectSpeed number # Resurrection speed for builders.
+--- @field captureSpeed number # Capture speed for builders.
+--- @field terraformSpeed number # Terraform speed for builders.
+--- @field canAssist boolean # Can the builder assist others?
+--- @field canBeAssisted boolean # Can the builder be assisted?
+--- @field canSelfRepair boolean # Can the builder repair itself?
+--- @field showNanoSpray boolean # Does the builder emit nanospray?
+--- @field nanoColor number[] # RGB color of nanospray.
+--- @field fullHealthFactory boolean # Factory repairs units before release.
+--- @field isAirbase boolean # Is the unit an airbase?
+--- @field footprintX integer # Footprint width (X).
+--- @field footprintZ integer # Footprint width (Z).
+--- @field yardmap string # Defines buildable squares.
+--- @field buildingMask integer # Bitmask for buildable ground types.
+--- @field levelGround boolean # Does the constructor level ground?
+--- @field movementClass string # Name of movement class.
+--- @field floater boolean # Does the unit float on water?
+--- @field upright boolean # Does the unit remain upright?
+--- @field maxSlope number # Max slope for placement.
+--- @field minWaterDepth number # Min water depth for placement.
+--- @field maxWaterDepth number # Max water depth for placement.
+--- @field waterline number # How low in the water the unit sits.
+--- @field minCollisionSpeed number # Min impact speed for collision damage.
+--- @field pushResistant boolean # Is the unit push resistant?
+--- @field maxVelocity number # Max speed.
+--- @field maxReverseVelocity number # Max reverse speed.
+--- @field acceleration number # Acceleration.
+--- @field brakeRate number # Deceleration.
+--- @field myGravity number # Gravity multiplier.
+--- @field turnRate number # Turn rate.
+--- @field turnInPlace boolean # Can the unit turn in place?
+--- @field turnInPlaceSpeedLimit number # Min speed for turn in place.
+--- @field turnInPlaceAngleLimit number # Max angle for turn in place.
+--- @field blocking boolean # Does the unit block movement?
+--- @field crushResistance number # Resistance to being crushed.
+--- @field flankingBonusMode integer # Flanking bonus mode.
+--- @field flankingBonusDir number[] # Flanking direction vector.
+--- @field flankingBonusMax number # Max flanking bonus.
+--- @field flankingBonusMin number # Min flanking bonus.
+--- @field flankingBonusMobilityAdd number # Flanking mobility add.
+--- @field canFly boolean # Can the unit fly?
+--- @field canSubmerge boolean # Can the aircraft land underwater?
+--- @field factoryHeadingTakeoff boolean # Aircraft takeoff behavior.
+--- @field collide boolean # Does the unit collide with others?
+--- @field hoverAttack boolean # Does the aircraft hover to attack?
+--- @field airStrafe boolean # Does the aircraft strafe while attacking?
+--- @field cruiseAlt number # Aircraft cruise altitude.
+--- @field airHoverFactor number # Aircraft hover factor.
+--- @field bankingAllowed boolean # Aircraft banking allowed.
+--- @field useSmoothMesh boolean # Use smoothed navigation mesh.
+--- @field maxFuel number # Max flight time (deprecated).
+--- @field refuelTime number # Refuel time (deprecated).
+--- @field minAirbasePower number # Min airbase workerTime (deprecated).
+--- @field canLoopbackAttack boolean # Can perform Immelmann turn.
+--- @field wingDrag number # Aircraft wing drag.
+--- @field wingAngle number # Aircraft wing angle.
+--- @field frontToSpeed number # Nose alignment to speed vector.
+--- @field speedToFront number # Nose alignment rate.
+--- @field crashDrag number # Drag when crashing.
+--- @field maxBank number # Max roll (z-axis).
+--- @field maxPitch number # Max pitch (x-axis).
+--- @field turnRadius number # Required turning radius.
+--- @field verticalSpeed number # Takeoff/landing speed.
+--- @field maxAileron number # Max roll turn speed.
+--- @field maxElevator number # Max pitch turn speed.
+--- @field maxRudder number # Max yaw turn speed.
+--- @field maxAcc number # Max acceleration (aircraft).
+--- @field attackSafetyDistance number # Fighter dive abort distance.
+--- @field canDropFlare boolean # Can drop flares (aircraft).
+--- @field flareReload number # Time between flare drops.
+--- @field flareDelay number # Delay before launching flares.
+--- @field flareEfficiency number # Probability missile targets flare.
+--- @field flareDropVector number[] # Direction vector for flares.
+--- @field flareTime integer # Flare lifetime (frames).
+--- @field flareSalvoSize integer # Number of flares per drop.
+--- @field flareSalvoDelay integer # Delay between flares in burst.
+--- @field transportSize integer # Size of units transport can pick up.
+--- @field minTransportSize integer # Smallest unit size transport can pick up.
+--- @field transportCapacity integer # Total number of units transport can pick up.
+--- @field transportMass number # Total mass transport can carry.
+--- @field minTransportMass number # Minimum mass transport can carry.
+--- @field loadingRadius number # Pickup/drop radius.
+--- @field unloadSpread number # Spread of unloaded passengers.
+--- @field isFirePlatform boolean # Can transported units fire?
+--- @field holdSteady boolean # Passengers slaved to attachment piece.
+--- @field releaseHeld boolean # Unload passengers on death.
+--- @field cantBeTransported boolean # Is unit transportable?
+--- @field transportByEnemy boolean # Can be transported by enemy?
+--- @field transportUnloadMethod integer # Air transport unload method.
+--- @field fallSpeed number # Fall speed for air transports.
+--- @field unitFallSpeed number # Override fall speed for passengers.
+--- @field category string # Unit categories (space-separated).
+--- @field noChaseCategory string # Categories not chased.
+--- @field leaveTracks boolean # Leaves track decals?
+--- @field trackType string # Track image filename.
+--- @field trackWidth number # Track width.
+--- @field trackOffset number # Track offset.
+--- @field trackStrength number # Track strength (visibility).
+--- @field trackStretch number # Track stretch (aspect ratio).
+--- @field useBuildingGroundDecal boolean # Show ground decal under structure?
+--- @field buildingGroundDecalType string # Ground decal image filename.
+--- @field buildingGroundDecalSizeX integer # Ground decal width.
+--- @field buildingGroundDecalSizeY integer # Ground decal height.
+--- @field buildingGroundDecalDecaySpeed number # Ground decal fade speed.
+--- @field usePieceCollisionVolumes boolean # Use piece collision volumes?
+--- @field useFootPrintCollisionVolume boolean # Use footprint collision volume?
+--- @field collisionVolume UnitDefCollisionVolume # Collision volume subtable.
+--- @field usePieceSelectionVolumes boolean # Use piece selection volumes?
+--- @field useFootPrintSelectionVolume boolean # Use footprint selection volume?
+--- @field selectionVolume UnitDefSelectionVolume # Selection volume subtable.
+--- @field highTrajectory integer # High trajectory fire mode.
+--- @field kamikaze boolean # Is the unit a kamikaze?
+--- @field kamikazeDistance number # Kamikaze detonation distance.
+--- @field kamikazeUseLOS boolean # Require LOS for kamikaze?
+--- @field strafeToAttack boolean # Strafe when unable to shoot?
+--- @field decoyFor string # UnitDef name this is a decoy for.
+--- @field selfDestructCountdown integer # Seconds between self-destruct and explosion.
+--- @field damageModifier number # Multiplier for weapon damage when armored.
+--- @field isTargetingUpgrade boolean # Upgrades targeting for radar/LOS.
+--- @field isFeature boolean # Dies into corpse feature when built?
+--- @field hideDamage boolean # Hide health from enemies?
+--- @field showPlayerName boolean # Show player name as unit name?
+--- @field showNanoFrame boolean # Show nanoframe while building?
+--- @field unitRestricted integer # Max number of this unit per player.
+--- @field power number # Relative power of the unit.
+--- @field weapons UnitDefWeapon[] # Weapons subtable.
+--- @field buildOptions string[] # Build options subtable (unit names).
+--- @field SFXTypes UnitDefSFXTypes # SFXTypes subtable.
+--- @field sounds UnitDefSounds # Sounds subtable.
+--- @field customParams table<string, string> # Custom parameters subtable.
+
+--- @class UnitDefCollisionVolume
+--- @field type string # Shape: "box", "sphere", "cylX", "cylY", "cylZ".
+--- @field axis string # Axis: "x", "y", "z".
+--- @field scales number[] # Lengths in each axis.
+--- @field offsets number[] # Offsets from unit center.
+
+--- @class UnitDefSelectionVolume
+--- @field type string # Shape: "box", "sphere", "cylX", "cylY", "cylZ".
+--- @field axis string # Axis: "x", "y", "z".
+--- @field scales number[] # Lengths in each axis.
+--- @field offsets number[] # Offsets from unit center.
+
+--- @class UnitDefWeapon
+--- @field name string # WeaponDef name.
+--- @field badTargetCategory string # Categories to avoid targeting.
+--- @field onlyTargetCategory string # Categories this weapon can target.
+--- @field slaveTo integer # Weapon number this is slaved to.
+--- @field mainDir number[] # Firing direction vector.
+--- @field maxAngleDif number # Firing arc in degrees.
+--- @field fuelUsage number # Fuel used per shot.
+
+--- @class UnitDefSFXTypes
+--- @field explosionGenerators string[] # CEGs for EmitSFX().
+--- @field pieceExplosionGenerators string[] # CEGs for piece explosions.
+
+--- @class UnitDefSounds
+--- @field ok string|string[]|UnitDefSound[] # Sound(s) for command issued.
+--- @field select string|string[]|UnitDefSound[] # Sound(s) for selection.
+--- @field arrived string|string[]|UnitDefSound[] # Sound(s) for arrival.
+--- @field build string|string[]|UnitDefSound[] # Sound(s) for building.
+--- @field activate string|string[]|UnitDefSound[] # Sound(s) for activation.
+--- @field deactivate string|string[]|UnitDefSound[] # Sound(s) for deactivation.
+--- @field cant string|string[]|UnitDefSound[] # Sound(s) for cannot do order.
+--- @field underattack string|string[]|UnitDefSound[] # Sound(s) for being attacked.
+
+--- @class UnitDefSound
+--- @field file string # Filename of the sound.
+--- @field volume number # Volume of the sound.
+
+--- Generated from https://springrts.com/wiki/Gamedev:FeatureDefs
+--- This class covers the main fields and subtables as described on the wiki.
+--- For full details, see the official documentation.
+--- @class FeatureDef
+--- @field description string # Tooltip description of the feature seen by the player.
+--- @field damage number # How much damage this feature can take before being destroyed.
+--- @field featureDead string # featureName of the feature to spawn when this is destroyed.
+--- @field indestructible boolean # If true, the feature cannot be damaged or destroyed.
+--- @field flammable boolean # Can the feature be set on fire?
+--- @field noSelect boolean # If true, cursor won't change to reclaim when hovering.
+--- @field mass number # The mass of the feature, used in crushing calculations.
+--- @field crushResistance number # How resistant the feature is to being crushed.
+--- @field object string # Filename of the 3D model (Objects3D/ directory).
+--- @field smokeTime integer # Frames a corpse feature emits smoke after death.
+--- @field drawType integer # Drawing type: 0=model, -1=none, >=1=engine trees.
+--- @field reclaimable boolean # Can this feature be reclaimed by a construction unit?
+--- @field autoReclaimable boolean # Should this feature be auto-reclaimed by patrolling units?
+--- @field reclaimTime number # Time taken to reclaim this feature.
+--- @field metal number # Metal resource given when reclaimed.
+--- @field energy number # Energy resource given when reclaimed.
+--- @field resurrectable integer # Can this feature be resurrected? -1=corpse only, 0=never, 1=always.
+--- @field geoThermal boolean # Does this feature act as a geothermal vent?
+--- @field footprintX integer # Width in footprint units (left-right).
+--- @field footprintZ integer # Width in footprint units (top-bottom).
+--- @field blocking boolean # Does this feature block movement?
+--- @field upright boolean # Does the feature remain upright on slopes?
+--- @field floating boolean # Does this feature float on water?
+--- @field useBuildingGroundDecal boolean # Show ground decal under structure?
+--- @field buildingGroundDecalType string # Ground decal image filename (Unittextures/ directory).
+--- @field buildingGroundDecalSizeX integer # Ground decal width (footprint units).
+--- @field buildingGroundDecalSizeY integer # Ground decal height (footprint units).
+--- @field buildingGroundDecalDecaySpeed number # How quickly the decal fades after death.
+--- @field collisionVolume FeatureDefCollisionVolume # Collision volume subtable.
+--- @field selectionVolume FeatureDefSelectionVolume # Selection volume subtable.
+--- @field customParams table<string, string> # Custom parameters subtable.
+
+--- @class FeatureDefCollisionVolume
+--- @field type string # Shape: "box", "sphere", "cylX", "cylY", "cylZ".
+--- @field axis string # Axis: "x", "y", "z".
+--- @field scales number[] # Lengths in each axis.
+--- @field offsets number[] # Offsets from feature center.
+
+--- @class FeatureDefSelectionVolume
+--- @field type string # Shape: "box", "sphere", "cylX", "cylY", "cylZ".
+--- @field axis string # Axis: "x", "y", "z".
+--- @field scales number[] # Lengths in each axis.
+--- @field offsets number[] # Offsets from feature center.
+
+--- Generated from https://springrts.com/wiki/Gamedev:WeaponDefs
+--- This class covers the main fields and subtables as described on the wiki.
+--- For full details, see the official documentation.
+--- @class WeaponDef
+--- @field weaponType string # Weapon type (e.g. "Cannon", "BeamLaser", etc.)
+--- @field name string # Descriptive name of the weapon.
+--- @field turret boolean # Does the weapon aim within an arc (turret)?
+--- @field noSelfDamage boolean # Can the weapon's explosion damage the firing unit?
+--- @field impactOnly boolean # Does the weapon only deal damage through direct hits?
+--- @field noExplode boolean # Does the weapon explode on impact or continue through?
+--- @field burnblow boolean # Does the weapon explode when it reaches max range?
+--- @field range number # Maximum range the weapon can fire at.
+--- @field weaponVelocity number # Velocity of the weapon projectile.
+--- @field reloadTime number # Time in seconds between shots.
+--- @field metalPerShot number # Metal used per shot.
+--- @field energyPerShot number # Energy used per shot.
+--- @field myGravity number # Overrides map gravity for ballistic weapons.
+--- @field fireStarter number # Chance (0-100) to set features on fire on impact.
+--- @field cameraShake number # Camera shake intensity on detonation.
+--- @field stockpile boolean # Does each round have to be built and stockpiled?
+--- @field stockpileTime number # Time to stockpile one round.
+--- @field interceptedByShieldType integer # Bitmask for shield interception.
+--- @field avoidGround boolean # Avoid firing if terrain blocks line of fire?
+--- @field avoidFriendly boolean # Avoid firing if friendly unit in line of fire?
+--- @field avoidFeature boolean # Avoid firing if static feature in line of fire?
+--- @field avoidNeutral boolean # Avoid firing if neutral unit in line of fire?
+--- @field collideEnemy boolean # Projectile collides with enemy units?
+--- @field collideFriendly boolean # Projectile collides with friendly units?
+--- @field collideFeature boolean # Projectile collides with static features?
+--- @field collideNeutral boolean # Projectile collides with neutral units?
+--- @field collideGround boolean # Projectile collides with terrain?
+--- @field collisionSize number # Visual/physical size of projectile.
+--- @field commandFire boolean # Only fires on manual order?
+--- @field canAttackGround boolean # Can be force-fired on ground?
+--- @field waterWeapon boolean # Can pass through water and target underwater?
+--- @field fireSubmersed boolean # Can fire while underwater?
+--- @field targetBorder number # Aims for center or edge of target's collision volume.
+--- @field cylinderTargeting number # Range calculated in sphere or cylinder.
+--- @field tolerance number # Aim tolerance (arc in cau).
+--- @field fireTolerance number # Max aim difference before not firing.
+--- @field allowNonBlockingAim boolean # Makes AimWeapon() script calls non-blocking.
+--- @field targetMoveError number # Random error added based on target speed.
+--- @field leadLimit number # Max distance to lead a target.
+--- @field leadBonus number # Experience boost to target leading.
+--- @field predictBoost number # How well the weapon predicts unit speeds.
+--- @field heightMod number # Changes spherical range into ellipsoid.
+--- @field proximityPriority number # Multiplier for distance in priority calculation.
+--- @field accuracy number # How accurate the weapon is (lower is better).
+--- @field movingAccuracy number # Accuracy while moving.
+--- @field sprayAngle number # Spread angle for burst weapons.
+--- @field ownerExpAccWeight number # Multiplier to accuracy/sprayAngle for experience.
+--- @field targetable integer # Bitmask for which weapons can intercept this weapon.
+--- @field interceptor integer # Bitmask for which weapons this weapon can intercept.
+--- @field interceptSolo boolean # Only this interceptor may target the projectile.
+--- @field coverage number # Radius within which interceptor will fire.
+--- @field waterBounce boolean # Does the weapon bounce on water impacts?
+--- @field groundBounce boolean # Does the weapon bounce on ground impacts?
+--- @field bounceSlip number # Horizontal velocity kept when bouncing.
+--- @field bounceRebound number # Vertical velocity kept when bouncing.
+--- @field numBounce integer # Number of times the weapon will bounce.
+--- @field areaOfEffect number # Diameter in which explosion causes damage.
+--- @field craterAreaOfEffect number # Radius in which explosion causes cratering.
+--- @field edgeEffectiveness number # Percent of max damage at edge of AoE.
+--- @field explosionSpeed number # Speed at which explosion propagates.
+--- @field impulseFactor number # Multiplier to impulse given to units.
+--- @field impulseBoost number # Constant added to impulse.
+--- @field craterMult number # Multiplier to depth of terrain crater.
+--- @field craterBoost number # Constant added to crater depth.
+--- @field burst integer # Shots per burst.
+--- @field burstRate number # Time between shots in a burst.
+--- @field projectiles integer # Projectiles released per shot.
+--- @field paralyzer boolean # Is the weapon a paralyzer?
+--- @field paralyzeTime integer # Max time in seconds target is paralyzed.
+--- @field dynDamageExp number # Exponent for range-dependent damage.
+--- @field dynDamageMin number # Minimum dynamic damage.
+--- @field dynDamageRange number # Range for dynamic damage formula.
+--- @field dynDamageInverted boolean # Invert dynamic damage curve?
+--- @field soundTrigger boolean # Play soundStart once per salvo?
+--- @field soundStart string # Sound to play when weapon fires.
+--- @field soundHitDry string # Sound to play on ground collision.
+--- @field soundHitWet string # Sound to play on water collision.
+--- @field cegTag string # Name of CEG to emit each frame.
+--- @field intensity number # Alpha transparency for projectiles.
+--- @field model string # 3D model for projectile.
+--- @field explosionScar boolean # Does explosion leave a scar decal?
+--- @field alwaysVisible boolean # Always rendered regardless of LOS?
+--- @field rgbColor number[] # Primary color for sprite rendering.
+--- @field explosionGenerator string # CEG to spawn as explosion.
+--- @field bounceExplosionGenerator string # CEG to spawn on bounce.
+--- @field texture1 string # Projectile/beam/flare texture.
+--- @field texture2 string # End-of-beam or smoketrail texture.
+--- @field texture3 string # Flare/muzzle/flame texture.
+--- @field texture4 string # Flare texture for largeBeamLaser.
+--- @field size number # Drawing radius of projectile.
+--- @field colorMap string # RGB color transitions or image filename.
+--- @field sizeDecay number # How quickly each particle decays in size.
+--- @field alphaDecay number # How quickly each particle fades out.
+--- @field separation number # Distance between each particle.
+--- @field noGap boolean # Particle separation mode.
+--- @field stages integer # Number of particles in each shot.
+--- @field highTrajectory integer # High trajectory fire mode.
+--- @field heightBoostFactor number # Boost to range by high terrain.
+--- @field gravityAffected boolean # Projectile loses height due to gravity?
+--- @field startVelocity number # Initial velocity of projectile.
+--- @field weaponAcceleration number # Initial acceleration of projectile.
+--- @field tracks boolean # Can projectile track a moving target?
+--- @field turnRate number # Rate at which projectile turns.
+--- @field flightTime number # Time before missile fuel runs out.
+--- @field fixedLauncher boolean # Spawn with orientation of shooting piece?
+--- @field wobble number # Random vector added to direction.
+--- @field dance number # Random vector added to position.
+--- @field trajectoryHeight number # Height of arc for missile.
+--- @field minIntensity number # Minimum damage fall-off for BeamLaser.
+--- @field beamTime number # Duration to fire the laser.
+--- @field beamBurst boolean # Fire burst of beams (BeamLaser).
+--- @field sweepFire boolean # Continue firing while aiming for new target.
+--- @field beamTTL integer # Frames beam remains visible (BeamLaser).
+--- @field beamDecay number # How fast beam fades out.
+--- @field laserFlareSize number # Size of firing flare.
+--- @field largeBeamLaser boolean # Enable tiling/scrolling effect.
+--- @field tileLength number # Length before texture is repeated.
+--- @field scrollSpeed number # Texture scroll speed.
+--- @field pulseSpeed number # Pulsating effect speed.
+--- @field duration number # Visual length of beam (LaserCannon).
+--- @field hardStop boolean # Does laser stop dead or fade out?
+--- @field fallOffRate number # Beam fade out rate after max range.
+--- @field lodDistance integer # Min camera distance for LOD.
+--- @field thickness number # Beam thickness.
+--- @field coreThickness number # Core thickness of beam.
+--- @field rgbColor2 number[] # Core color of beam.
+--- @field smokeTrail boolean # Missile emits smoke trail?
+--- @field subMissile boolean # Torpedo can leave water and target land?
+--- @field weaponTimer number # Time missile ascends before turning.
+--- @field shield WeaponDefShield # Shield subtable (for shield weapons).
+--- @field damage table<string, number> # Damage subtable (armor class to damage).
+--- @field customParams table<string, string> # Custom parameters subtable.
+
+--- @class WeaponDefShield
+--- @field repulser boolean # Does the shield repulse (deflect) projectiles?
+--- @field force number # Force applied by repulser.
+--- @field maxSpeed number # Max speed imparted to projectiles.
+--- @field visibleRepulse boolean # Is the repulse effect rendered?
+--- @field interceptType integer # Bitmask for intercepted weapon types.
+--- @field armorType string # Armor class of the shield.
+--- @field smart boolean # Can allied projectiles pass through?
+--- @field exterior boolean # Can projectiles fired within pass through?
+--- @field energyUse number # Energy consumed to absorb/repulse.
+--- @field radius number # Radius of the shield.
+--- @field power number # Max hit-points of the shield.
+--- @field startingPower number # Initial hit-points of the shield.
+--- @field powerRegen number # Hit-points regenerated per second.
+--- @field powerRegenEnergy number # Energy used per hit-point regen.
+--- @field rechargeDelay number # Delay before shield begins to regen.
+--- @field visible boolean # Is the shield visible?
+--- @field visibleHitFrames integer # Frames shield is visible when hit.
+--- @field badColor number[] # RGBA color as hit-points are reduced.
+--- @field goodColor number[] # RGBA color as hit-points are regenerated.
+--- @field alpha number # Alpha transparency of the shield.

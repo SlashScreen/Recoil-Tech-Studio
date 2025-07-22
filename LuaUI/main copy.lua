@@ -18,11 +18,12 @@ LUAUI_VERSION = "LuaUI v0.3"
 Spring.SendCommands({ "ctrlpanel " .. LUAUI_DIRNAME .. "ctrlpanel.txt" })
 
 VFS.Include(LUAUI_DIRNAME .. "rml_setup.lua", nil, VFS.ZIP)
-VFS.Include(LUAUI_DIRNAME .. "utils.lua")
+VFS.Include(LUAUI_DIRNAME .. "utils.lua", utilFile)
 --VFS.Include("libs/teal/integration.lua")
 
 WG = {}
 Spring.Utilities = {}
+VFS.Include("LuaRules/Utilities/glvolumes.lua")
 VFS.Include("LuaUI/fonts.lua")
 
 include("setupdefs.lua")

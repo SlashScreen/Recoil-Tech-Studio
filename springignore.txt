@@ -1,5 +1,0 @@
-.git
-doc
-model
-issues
-dist_cfg

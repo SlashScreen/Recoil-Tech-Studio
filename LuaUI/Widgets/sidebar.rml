@@ -1,0 +1,32 @@
+<rml>
+    <head>
+        <style>
+            body {
+				height: 100%;
+				width: 100%;
+				font-family: "Josefin Sans";
+				font-size: 16dp;
+				pointer-events: none;
+			}
+
+			#widget {
+				position: absolute;
+				background: #000000;
+				bottom: 0;
+				right: 0;
+				pointer-events: auto;
+				padding: 3dp;
+				display: flex;
+				flex-direction: column;
+				height: 100vh;
+				width: 25vh;
+				gap: 3dp;
+			}
+        </style>
+    </head>
+    <body>
+        <div id="widget" data-model="sidebar_model">
+
+        </div>
+    </body>
+</rml>

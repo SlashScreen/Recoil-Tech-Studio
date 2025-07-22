@@ -28,3 +28,6 @@
 [submodule "libs_sb/utils"]
 	path = libs_sb/utils
 	url = https://github.com/gajop/spring-lua-utils.git
+[submodule "recoil-lua-library"]
+	path = recoil-lua-library
+	url = git@github.com:beyond-all-reason/recoil-lua-library.git
